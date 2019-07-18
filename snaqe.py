@@ -1,4 +1,5 @@
 #Snake Tutorial Python
+from pyqubo import Binary
 import networkx as nx
 #import dwave_networkx as dnx
 import math
@@ -311,6 +312,26 @@ def message_box(subject, content):
 
 
 class PathSolver():
+    def __init__(self, graph):
+        self.graph = graph.copy()
+        self.vars = create_vars()
+
+    
+    def create_vars(self):
+        vars ={}
+        for i, node in enumerate(self.graph.nodes()):
+            vars[node] = Binary(f'x{i}')
+        print(vars)
+        for edge in self.graph.edges():
+            print(edge)
+        return vars
+
+    def one_body_terms(self):
+        #Distance traversted term
+        
+
+    
+            
     
     
 def main():
@@ -331,7 +352,11 @@ def main():
     H.add_node((11,11))
     H.add_edge((10,10),(11,10))
     H.add_edge((11,10),(11,11))
-    s.graph_to_moves(H)
+    ps=PathSolver()
+    ps.create_qubo(s.snake_to_graph())
+#    s.graph_to_moves(H)
+
+
     # clock = pygame.time.Clock()
     
     # while flag:
