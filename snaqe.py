@@ -101,11 +101,14 @@ class snake(object):
         pass
 
     def get_snake_unconnected_graph(self):
-        grid_size = 16
-        G = nx.Graph()
-        for i in range(grid_size):
-            for j in range(grid_size):
-                G.add_node((i,j))
+        grid_size = 4
+        # G = nx.Graph()
+        # for i in range(grid_size):
+        #     for j in range(grid_size):
+        #         G.add_node((i,j))
+        G = nx.grid_2d_graph(grid_size, grid_size, periodic =True)
+        nx.set_edge_attributes(G, 2, "weight" )
+        
         return G
 
     def snake_to_graph(self):
@@ -114,7 +117,7 @@ class snake(object):
         for cube in self.body:
             G.add_node(cube.pos)
             if prev_cube_pos:
-                G.add_edge(cube.pos, prev_cube_pos)
+                G.add_edge(cube.pos, prev_cube_pos, weight=10)
             prev_cube_pos = cube.pos
         #nx.bipartite_layout(G,G.nodes())
         #nx.draw(G)
@@ -312,35 +315,40 @@ def message_box(subject, content):
 
 
 class PathSolver():
-    def __init__(self, graph):
+    def __init__(self, graph, head_pos, snack_pos):
         self.graph = graph.copy()
-        self.vars = create_vars()
+        self.vars = self.create_vars()
+        self.one_body_terms()
 
     
     def create_vars(self):
         vars ={}
-        for i, node in enumerate(self.graph.nodes()):
-            vars[node] = Binary(f'x{i}')
-        print(vars)
-        for edge in self.graph.edges():
-            print(edge)
+        for i, edge in enumerate(self.graph.edges()):
+            vars[edge] = Binary(f'x{i}')
+        #print(vars)
         return vars
 
     def one_body_terms(self):
         #Distance traversted term
+        H = 0
+        H1 = 0
+        for edge in self.graph.edges.data():
+            dict_key = (edge[0],edge[1])
+            #print(edge[2]["weight"])
+            H1 += edge[2]["weight"]*self.vars[dict_key]
+        print(H1)
+        #Links around the head term
+     
         
 
-    
-            
-    
-    
+        
 def main():
     global width, rows, s, snack
     width = 500
     rows = 10
     #win = pygame.display.set_mode((width, width))
-    s = snake((0,255,0), (10,10))
-    #snack = cube(randomSnack(rows, s), color=(255,0,0))
+    s = snake((0,255,0), (1,1))
+    snack = cube(randomSnack(rows, s), color=(255,0,0))
     flag = True
 
     s.addCube()
@@ -352,8 +360,8 @@ def main():
     H.add_node((11,11))
     H.add_edge((10,10),(11,10))
     H.add_edge((11,10),(11,11))
-    ps=PathSolver()
-    ps.create_qubo(s.snake_to_graph())
+    ps=PathSolver(s.snake_to_graph(), s.body[0].pos, snack.pos)
+
 #    s.graph_to_moves(H)
 
 
