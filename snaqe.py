@@ -122,14 +122,40 @@ class snake(object):
     
 
     def graph_to_moves(self, path_graph):
-        G = self.snake_to_graph()
-        print(f"G: {G.edges()} H: {path_graph.edges()}")
-        print(nx.intersection(self.snake_to_graph(), path_graph))
-        H=path_graph
-        R=G.copy()
-        
-        R.remove_edges_from(n for n in G if n not in H)
-        print(f'awe: {R}')
+        num_moves = len(path_graph.edges)
+        moves = []
+        head_pos = self.body[0].pos
+        prev_head_poses = []
+        prev_head_poses.append(head_pos)
+        run_flag = True
+        print(f'all edges: {path_graph.edges()}')
+        for i in range(len(path_graph.edges)):
+            for edges in path_graph.edges(head_pos):
+                print(f'head_pos {head_pos}')
+                print(f'edges: {edges}')
+                for edge in edges:
+                    print(f'loop edge: {edge}')
+                    if edge not in prev_head_poses:
+                        print("AS")
+                        prev_head_poses.append(head_pos)
+                        moves.append((head_pos[0]-edge[0], head_pos[1]-edge[1]))
+                        head_pos = edge
+                        break
+        print(moves)
+                    
+        # while run_flag:
+        #     if len(path_graph.edges(head_pos)) == 1 and head_pos not in prev_head_poses:
+        #         run_flag = False
+        #     for edges in path_graph.edges(head_pos):
+        #         for edge in edges:
+        #             if edge not in prev_head_poses:
+        #                 print(f'len:{len(path_graph.edges(head_pos))}  head: {head_pos} edge:{edge}')
+        #                 moves = (head_pos[0]-edge[0], head_pos[1]-edge[1])
+        #                 head_pos = edge
+
+        #                 break                
+        # print(f'moves: {moves}')
+
 
 
     def reset(self, pos):
@@ -284,6 +310,9 @@ def message_box(subject, content):
         pass
 
 
+class PathSolver():
+    
+    
 def main():
     global width, rows, s, snack
     width = 500
