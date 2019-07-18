@@ -1,5 +1,6 @@
 #Snake Tutorial Python
-
+import networkx as nx
+#import dwave_networkx as dnx
 import math
 import random
 import pygame
@@ -9,7 +10,7 @@ from tkinter import messagebox
 class cube(object):
     rows = 20
     w = 500
-    def __init__(self,start,dirnx=1,dirny=0,color=(255,0,0)):
+    def __init__(self,start,dirnx=1,dirny=0,color=(0,255,0)):
         self.pos = start
         self.dirnx = 1
         self.dirny = 0
@@ -34,7 +35,6 @@ class cube(object):
             circleMiddle2 = (i*dis + dis -radius*2, j*dis+8)
             pygame.draw.circle(surface, (0,0,0), circleMiddle, radius)
             pygame.draw.circle(surface, (0,0,0), circleMiddle2, radius)
-        
 
 
 
@@ -89,7 +89,118 @@ class snake(object):
                 elif c.dirny == 1 and c.pos[1] >= c.rows-1: c.pos = (c.pos[0], 0)
                 elif c.dirny == -1 and c.pos[1] <= 0: c.pos = (c.pos[0],c.rows-1)
                 else: c.move(c.dirnx,c.dirny)
+
+
+    def move_via_dwave():
+        # 1: Embed Graph
+        # 2: Create Qubo
+        # 3: Pass Qubo to Dwave
+        # 4: Unpack qubo to graph
+        # 5: 
+        pass
+
+    def get_snake_unconnected_graph(self):
+        grid_size = 16
+        G = nx.Graph()
+        for i in range(grid_size):
+            for j in range(grid_size):
+                G.add_node((i,j))
+        return G
+
+    def snake_to_graph(self):
+        G = s.get_snake_unconnected_graph()
+        prev_cube_pos = False
+        for cube in self.body:
+            G.add_node(cube.pos)
+            if prev_cube_pos:
+                G.add_edge(cube.pos, prev_cube_pos)
+            prev_cube_pos = cube.pos
+        #nx.bipartite_layout(G,G.nodes())
+        #nx.draw(G)
+        #print(f'xs: {G.nodes()}')
+        return G
+    
+
+    def graph_to_moves(self, path_graph):
+        G = self.snake_to_graph()
+        print(f"G: {G.edges()} H: {path_graph.edges()}")
+        print(nx.intersection(self.snake_to_graph(), path_graph))
+        H=path_graph
+        R=G.copy()
         
+        R.remove_edges_from(n for n in G if n not in H)
+        print(f'awe: {R}')
+
+
+    def reset(self, pos):
+        self.head = cube(pos)
+        self.body = []
+        self.body.append(self.head)
+        self.turns = {}
+        self.dirnx = 0
+        self.dirny = 1
+
+
+    def addCube(self):
+        tail = self.body[-1]
+        dx, dy = tail.dirnx, tail.dirny
+
+        if dx == 1 and dy == 0:
+            self.body.append(cube((tail.pos[0]-1,tail.pos[1])))
+        elif dx == -1 and dy == 0:
+            self.body.append(cube((tail.pos[0]+1,tail.pos[1])))
+        elif dx == 0 and dy == 1:
+            self.body.append(cube((tail.pos[0],tail.pos[1]-1)))
+        elif dx == 0 and dy == -1:
+            self.body.append(cube((tail.pos[0],tail.pos[1]+1)))
+
+        self.body[-1].dirnx = dx
+        self.body[-1].dirny = dy
+        
+
+    def draw(self, surface):
+        for i, c in enumerate(self.body):
+            if i ==0:
+                c.draw(surface, True)
+            else:
+                c.draw(surface)
+
+
+def drawGrid(w, rows, surface):
+    sizeBtwn = w // rows
+
+    x = 0
+    y = 0
+    for l in range(rows):
+        x = x + sizeBtwn
+        y = y + sizeBtwn
+
+#        pygame.draw.line(surface, (000,000,000), (x,0),(x,w))
+ #       pygame.draw.line(surface, (255,000), (0,y),(w,y))
+        
+
+def redrawWindow(surface):
+    global rows, width, s, snack
+    surface.fill((255,255,255))
+    s.draw(surface)
+    snack.draw(surface)
+    drawGrid(width,rows, surface)
+    pygame.display.update()
+
+
+def randomSnack(rows, item):
+
+    positions = item.body
+
+    while True:
+        x = random.randrange(rows)
+        y = random.randrange(rows)
+        if len(list(filter(lambda z:z.pos == (x,y), positions))) > 0:
+            continue
+        else:
+            break
+        
+    return (x,y)
 
     def reset(self, pos):
         self.head = cube(pos)
@@ -176,36 +287,48 @@ def message_box(subject, content):
 def main():
     global width, rows, s, snack
     width = 500
-    rows = 20
-    win = pygame.display.set_mode((width, width))
+    rows = 10
+    #win = pygame.display.set_mode((width, width))
     s = snake((0,255,0), (10,10))
-    snack = cube(randomSnack(rows, s), color=(0,255,0))
+    #snack = cube(randomSnack(rows, s), color=(255,0,0))
     flag = True
 
-    clock = pygame.time.Clock()
+    s.addCube()
+    s.addCube()
+    s.snake_to_graph()
+    H=s.get_snake_unconnected_graph()
+    H.add_node((10,10))
+    H.add_node((11,10))
+    H.add_node((11,11))
+    H.add_edge((10,10),(11,10))
+    H.add_edge((11,10),(11,11))
+    s.graph_to_moves(H)
+    # clock = pygame.time.Clock()
     
-    while flag:
-        pygame.time.delay(50)
-        clock.tick(10)
-        s.move()
-        if s.body[0].pos == snack.pos:
-            s.addCube()
-            snack = cube(randomSnack(rows, s), color=(0,255,0))
+    # while flag:
+    #     pygame.time.delay(50)
+    #     clock.tick(10)
+    #     s.move()
+    #     if s.body[0].pos == snack.pos:
+    #         s.addCube()
+    #         snack = cube(randomSnack(rows, s), color=(255,0,0))
+    #         for block in s.body:
+    #             print(block.pos)
 
-        for x in range(len(s.body)):
-            if s.body[x].pos in list(map(lambda z:z.pos,s.body[x+1:])):
-                print('Score: ', len(s.body))
-                message_box('You Lost!', 'Play again...')
-                s.reset((10,10))
-                break
+
+    #     for x in range(len(s.body)):
+    #         if s.body[x].pos in list(map(lambda z:z.pos,s.body[x+1:])):
+    #             print('Score: ', len(s.body))
+    #             message_box('You Lost!', 'Play again...')
+    #             s.reset((10,10))
+    #             break
 
             
-        redrawWindow(win)
+    #     redrawWindow(win)
 
         
-    pass
+    # pass
 
 
 
 main()
-
