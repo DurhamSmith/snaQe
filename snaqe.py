@@ -107,21 +107,21 @@ class snake(object):
         #     for j in range(grid_size):
         #         G.add_node((i,j))
         G = nx.grid_2d_graph(grid_size, grid_size, periodic =True)
-        nx.set_edge_attributes(G, 2, "weight" )
-        
+        nx.set_edge_attributes(G, 2, "weight" )        
         return G
 
     def snake_to_graph(self):
         G = s.get_snake_unconnected_graph()
         prev_cube_pos = False
         for cube in self.body:
-            G.add_node(cube.pos)
+            print(f'cube: {cube.pos}')
             if prev_cube_pos:
                 G.add_edge(cube.pos, prev_cube_pos, weight=10)
             prev_cube_pos = cube.pos
         #nx.bipartite_layout(G,G.nodes())
         #nx.draw(G)
         #print(f'xs: {G.nodes()}')
+        
         return G
     
 
@@ -315,7 +315,9 @@ def message_box(subject, content):
 
 
 class PathSolver():
-    def __init__(self, graph, head_pos, snack_pos):
+    def __init__(self, graph, head_pos, apple_pos):
+        self.head = head_pos
+        self.apple = apple_pos
         self.graph = graph.copy()
         self.vars = self.create_vars()
         self.one_body_terms()
@@ -333,11 +335,40 @@ class PathSolver():
         H = 0
         H1 = 0
         for edge in self.graph.edges.data():
-            dict_key = (edge[0],edge[1])
+            print(f'blah: {edge}')
+            dict_key = self.get_valid_key((edge[0],edge[1]))
             #print(edge[2]["weight"])
             H1 += edge[2]["weight"]*self.vars[dict_key]
         print(H1)
+
         #Links around the head term
+        H2=0
+        lambda_=2
+
+        for edge in self.graph.edges(self.head):
+            print(f'edge: {edge}')
+            H2 -= 2*lambda_*self.vars[self.get_valid_key(edge)]
+        print(H2)
+
+        #Links around the apple term
+        H3=0
+        gamma=2
+        print(f'apple: {self.apple}')
+        for edge in self.graph.edges(self.apple):
+            print(f'edge: {edge}')
+            H3 -= 2*gamma*self.vars[self.get_valid_key(edge)]
+        print(H3)
+
+        
+        
+    def get_valid_key(self, key):
+        if key in self.vars:
+            return key
+        elif (key[1], key[0]) in self.vars:
+            return (key[1], key[0])
+        else:
+            raise "Awer"
+        
      
         
 
@@ -347,8 +378,9 @@ def main():
     width = 500
     rows = 10
     #win = pygame.display.set_mode((width, width))
-    s = snake((0,255,0), (1,1))
-    snack = cube(randomSnack(rows, s), color=(255,0,0))
+    s = snake((0,255,0), (2,2))
+#    snack = cube(randomSnack(rows, s), color=(255,0,0))
+    snack = cube(randomSnack(4, s), color=(255,0,0))
     flag = True
 
     s.addCube()
