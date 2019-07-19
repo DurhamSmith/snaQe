@@ -12,12 +12,16 @@ import pygame
 import tkinter as tk
 import dimod
 from tkinter import messagebox
+import pickle
+import json
+from dimod.serialization.json import DimodEncoder, DimodDecoder
 
-SIGMA= 2
-CHI = 0
-LAMBDA = 2
-MU = 2
-GAMMA = 2 
+SIGMA= 1
+CHI = 0.01
+LAMBDA = 1
+MU = 1
+GAMMA = 1
+
 class cube(object):
     rows = 20
     w = 500
@@ -27,7 +31,7 @@ class cube(object):
         self.dirny = 0
         self.color = color
 
-        
+
     def move(self, dirnx, dirny):
         self.dirnx = dirnx
         self.dirny = dirny
@@ -107,7 +111,7 @@ class snake(object):
         # 2: Create Qubo
         # 3: Pass Qubo to Dwave
         # 4: Unpack qubo to graph
-        # 5: 
+        # 5:
         pass
 
     def get_snake_unconnected_graph(self):
@@ -116,8 +120,8 @@ class snake(object):
         # for i in range(grid_size):
         #     for j in range(grid_size):
         #         G.add_node((i,j))
-        G = nx.grid_2d_graph(grid_size, grid_size, periodic =True)
-        nx.set_edge_attributes(G, 2, "weight" )        
+        G = nx.grid_2d_graph(grid_size, grid_size, periodic =False)
+        nx.set_edge_attributes(G, 2, "weight" )
         return G
 
     def snake_to_graph(self):
@@ -126,14 +130,14 @@ class snake(object):
         for cube in self.body:
             print(f'cube: {cube.pos}')
             if prev_cube_pos:
-                G.add_edge(cube.pos, prev_cube_pos, weight=10)
+                G.add_edge(cube.pos, prev_cube_pos, weight=1)
             prev_cube_pos = cube.pos
         #nx.bipartite_layout(G,G.nodes())
         #nx.draw(G)
         #print(f'xs: {G.nodes()}')
-        
+
         return G
-    
+
 
     def graph_to_moves(self, path_graph):
         num_moves = len(path_graph.edges)
@@ -156,7 +160,7 @@ class snake(object):
                         head_pos = edge
                         break
         print(moves)
-                    
+
         # while run_flag:
         #     if len(path_graph.edges(head_pos)) == 1 and head_pos not in prev_head_poses:
         #         run_flag = False
@@ -167,7 +171,7 @@ class snake(object):
         #                 moves = (head_pos[0]-edge[0], head_pos[1]-edge[1])
         #                 head_pos = edge
 
-        #                 break                
+        #                 break
         # print(f'moves: {moves}')
 
 
@@ -196,7 +200,7 @@ class snake(object):
 
         self.body[-1].dirnx = dx
         self.body[-1].dirny = dy
-        
+
 
     def draw(self, surface):
         for i, c in enumerate(self.body):
@@ -217,7 +221,7 @@ def drawGrid(w, rows, surface):
 
 #        pygame.draw.line(surface, (000,000,000), (x,0),(x,w))
  #       pygame.draw.line(surface, (255,000), (0,y),(w,y))
-        
+
 
 def redrawWindow(surface):
     global rows, width, s, snack
@@ -239,7 +243,7 @@ def randomSnack(rows, item):
             continue
         else:
             break
-        
+
     return (x,y)
 
     def reset(self, pos):
@@ -266,7 +270,7 @@ def randomSnack(rows, item):
 
         self.body[-1].dirnx = dx
         self.body[-1].dirny = dy
-        
+
 
     def draw(self, surface):
         for i, c in enumerate(self.body):
@@ -287,7 +291,7 @@ def drawGrid(w, rows, surface):
 
 #        pygame.draw.line(surface, (000,000,000), (x,0),(x,w))
  #       pygame.draw.line(surface, (255,000), (0,y),(w,y))
-        
+
 
 def redrawWindow(surface):
     global rows, width, s, snack
@@ -309,7 +313,7 @@ def randomSnack(rows, item):
             continue
         else:
             break
-        
+
     return (x,y)
 
 
@@ -336,16 +340,21 @@ class PathSolver():
     def run_dwave(self):
         #sampler = DWaveSampler().sample_qubo(self.qubo)
         print(len(self.qubo))
+
         Dwavesolver = EmbeddingComposite(DWaveSampler())
         sampleset = Dwavesolver.sample_qubo(self.qubo, num_reads=1000)
+
         print(sampleset)
+        print("type")
+        print(sampleset.first)
+
   #      Q.update(coupler_strengths)
         # Sample once on a D-Wave system and print the returned sample
         #response = DWaveSampler().sample_qubo(Q, num_reads=1)
 
-    
+
         #print(sampleset)
-        
+
     def get_qubo(self):
         H= self.one_body_terms() + self.two_body_terms() + self.get_justin_trubo()
         model = H.compile()
@@ -353,7 +362,7 @@ class PathSolver():
         qubo, offset = model.to_qubo()
         print(f'QUBO:\n {qubo}')
         return qubo
-        
+
     def create_vars(self):
         vars ={}
         for i, edge in enumerate(self.graph.edges()):
@@ -413,7 +422,7 @@ class PathSolver():
 
         H = H1+H2+H3+H4
         return H
-                
+
     def get_justin_trubo(self):
         H=0
         for edge_1 in self.graph.edges():
@@ -434,10 +443,10 @@ class PathSolver():
                                 H += -2*CHI*self.vars[e1]*self.vars[e2]*self.vars[e3]
         #print(H)
         return H
-        
-            
 
-    def get_node(self, tup): 
+
+
+    def get_node(self, tup):
         if tup[0][0] == tup[1][0]:
             return tup[0][0]
         if tup[0][0] == tup[1][1]:
@@ -447,7 +456,7 @@ class PathSolver():
         if tup[0][1] == tup[1][1]:
             return tup[0][1]
 
-        
+
     def one_body_terms(self):
         #Distance traversted term
         H = 0
@@ -482,10 +491,10 @@ class PathSolver():
 
         H= H1 + H2 + H3 + H4
 
-        return H 
+        return H
 
-        
-        
+
+
     def get_valid_key(self, key):
         if key in self.vars:
             return key
@@ -493,20 +502,21 @@ class PathSolver():
             return (key[1], key[0])
         else:
             raise "Awer"
-        
-     
-        
 
-        
+
+
+
+
 def main():
-    global width, rows, s, snack
+    global width, rows, s, snack, sampleset
     width = 500
     rows = 10
     #win = pygame.display.set_mode((width, width))
     s = snake((0,255,0), (1,1))
-#    snack = cube(randomSnack(rows, s), color=(255,0,0))
+    #snack = cube(randomSnack(rows, s), color=(255,0,0))
     snack = cube(randomSnack(3, s), color=(255,0,0))
     flag = True
+
 
     s.addCube()
     s.snake_to_graph()
@@ -516,14 +526,15 @@ def main():
     H.add_node((11,11))
     H.add_edge((10,10),(11,10))
     H.add_edge((11,10),(11,11))
-    
-    ps=PathSolver(s.snake_to_graph(), s.body[0].pos, (1, 2))
 
+    ps=PathSolver(s.snake_to_graph(), s.body[0].pos, (2, 2))
+
+    print(type(ps))
 #    s.graph_to_moves(H)
 
 
     # clock = pygame.time.Clock()
-    
+
     # while flag:
     #     pygame.time.delay(50)
     #     clock.tick(10)
@@ -542,10 +553,10 @@ def main():
     #             s.reset((10,10))
     #             break
 
-            
+
     #     redrawWindow(win)
 
-        
+
     # pass
 
 
