@@ -128,9 +128,9 @@ class snake(object):
         G = s.get_snake_unconnected_graph()
         prev_cube_pos = False
         for cube in self.body:
-            print(f'cube: {cube.pos}')
+            print(f'snake body cube: {cube.pos}')
             if prev_cube_pos:
-                G.add_edge(cube.pos, prev_cube_pos, weight=1)
+                G.add_edge(cube.pos, prev_cube_pos, weight=5)
             prev_cube_pos = cube.pos
         #nx.bipartite_layout(G,G.nodes())
         #nx.draw(G)
@@ -341,12 +341,12 @@ class PathSolver():
         #sampler = DWaveSampler().sample_qubo(self.qubo)
         print(len(self.qubo))
 
-        Dwavesolver = EmbeddingComposite(DWaveSampler())
-        sampleset = Dwavesolver.sample_qubo(self.qubo, num_reads=1000)
-
-        print(sampleset)
+ #       Dwavesolver = EmbeddingComposite(DWaveSampler())
+#        sampleset = Dwavesolver.sample_qubo(self.qubo, num_reads=1000)
+        sampleset = ExactSolver().sample_qubo(self.qubo)
+        #print(sampleset)
         print("type")
-        print(sampleset.first)
+        print(f'SAMPLE: {sampleset.first}')
 
   #      Q.update(coupler_strengths)
         # Sample once on a D-Wave system and print the returned sample
@@ -364,12 +364,15 @@ class PathSolver():
         return qubo
 
     def create_vars(self):
-        vars ={}
-        for i, edge in enumerate(self.graph.edges()):
-            vars[edge] = Binary(f'x{i}')
-        #print(vars)
-        return vars
-
+       vars ={}
+       print('===========MAPPINGS==============')
+       for i, edge in enumerate(self.graph.edges.data()):
+           e=(edge[0],edge[1])
+           print(f'edge: {e} \t data: {edge[2]}\t mapping x{i}')
+           vars[e] = Binary(f'x{i}')
+       #print(vars)
+       return vars
+    
     def two_body_terms(self):
         #twobody head terms
         H=0
@@ -529,7 +532,6 @@ def main():
 
     ps=PathSolver(s.snake_to_graph(), s.body[0].pos, (2, 2))
 
-    print(type(ps))
 #    s.graph_to_moves(H)
 
 
