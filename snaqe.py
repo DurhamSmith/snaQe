@@ -339,20 +339,34 @@ class PathSolver():
         self.get_qubo()
         self.run_dwave()
         self.get_shortest_path_graph()
+        self.get_moves()
 
     def get_shortest_path_graph(self):
         graph = nx.grid_2d_graph(GRID_SIZE, GRID_SIZE, periodic =False)
+        self.path_edges = []
         for edge in graph.edges():
             try:
                 if self.sampleset.first.sample[f'{edge}']:
                     print(f'{edge} MADE IT')
+                    self.path_edges.append(edge)
                 #nx.set_edge_attributes(graph, f'{edge}', 
                 
                 #print(f"we made it: {edge}")
             except KeyError:
                 print(edge)
                 #print(f'No Key: {edge}')
-                
+
+    def get_moves(self):
+        temp_head = self.head
+        i = 0
+        self.moves = []
+        while(i< len(self.path_edges)):
+            for path_edge in self.path_edges:
+                if path_edge[0] == temp_head:
+                    self.moves.append((path_edge[1][0] - temp_head[0], path_edge[1][1] - temp_head[1]))
+                    temp_head = path_edge[1]
+                    i+=1
+        print(self.moves)
 
     def run_dwave(self):
         #sampler = DWaveSampler().sample_qubo(self.qubo)
