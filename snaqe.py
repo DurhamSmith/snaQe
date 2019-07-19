@@ -328,8 +328,9 @@ def message_box(subject, content):
 
 
 class PathSolver():
-    def __init__(self, graph, head_pos, apple_pos):
-        self.head = head_pos
+    def __init__(self, graph, snake, apple_pos):
+        self.head = snake.body[0].pos
+        self.snake = snake
         self.apple = apple_pos
         self.graph = graph.copy()
         self.vars = self.create_vars()
@@ -365,7 +366,7 @@ class PathSolver():
        print('===========MAPPINGS==============')
        for i, edge in enumerate(self.graph.edges.data()):
            e=(edge[0],edge[1])
-           #print(f'edge: {e} \t data: {edge[2]}}')
+           print(f'edge: {e} \t data: {edge[2]}')
            label = f'({edge[0]}, {edge[1]})'
            vars[e] = Binary(label)
        return vars
@@ -468,15 +469,22 @@ class PathSolver():
             H1 += edge[2]["weight"]*self.vars[dict_key]
         
         #Links around the head term
+        #checked @ 09:37
         H2=0
         self.head_edges = []
+        head_neck_edge = self.get_valid_key((self.head, self.snake.body[1].pos))
+        self.head_neck_edge = head_neck_edge
+        # print(f'head_neck_edge: {head_neck_edge}')
         for edge in self.graph.edges(self.head):
             head_edge = self.get_valid_key(edge)
-            H2 -= 2*LAMBDA*self.vars[head_edge]
-            self.head_edges.append(head_edge)
-        print(H2)
-            
+            # print(f'head_edge: {head_edge}')
+            if not self.get_valid_key(head_edge) == self.get_valid_key(head_neck_edge):
+                H2 -= 2*LAMBDA*self.vars[head_edge]
+                self.head_edges.append(head_edge)
+
+                
         #Links around the apple term
+        #Checked at 09:38
         H3=0
         self.apple_edges=[]
         for edge in self.graph.edges(self.apple):
@@ -485,12 +493,13 @@ class PathSolver():
             self.apple_edges.append(apple_edge)
 
         #Links from 3body bulk term
+        # checked @ 09:55
         H4=0
         for edge in self.graph.edges():
-            if edge in self.head_edges or edge in self.apple_edges:
-                pass
-            H4 -= 2*CHI*self.vars[self.get_valid_key(edge)]
-
+            e = self.get_valid_key(edge)
+            if e not in self.head_edges and edge not in self.apple_edges and not e==head_neck_edge:
+                H4 += 4*CHI*self.vars[self.get_valid_key(edge)]
+        print(H4)
         H= H1 + H2 + H3 + H4
 
         return H
@@ -529,7 +538,7 @@ def main():
     H.add_edge((10,10),(11,10))
     H.add_edge((11,10),(11,11))
     print(f'HYPERS \t LAMBDA: {LAMBDA}\t CHI: {CHI}\t MU: {MU}\t GAMMA: {GAMMA}')
-    ps=PathSolver(s.snake_to_graph(), s.body[0].pos, (2, 2))
+    ps=PathSolver(s.snake_to_graph(), s, (2, 2))
 
 #    s.graph_to_moves(H)
 
