@@ -16,12 +16,13 @@ import pickle
 import json
 from dimod.serialization.json import DimodEncoder, DimodDecoder
 
+GRID_SIZE = 3
 NON_SNAKE_WEIGHTS=1
-SNAKE_WEIGHTS=10
-CHI = 5
-LAMBDA = 1
-MU = 1
-GAMMA = 1
+SNAKE_WEIGHTS=100
+CHI = 3
+LAMBDA = 10
+MU = 2
+GAMMA = 10
 
 class cube(object):
     rows = 20
@@ -116,12 +117,11 @@ class snake(object):
         pass
 
     def get_snake_unconnected_graph(self):
-        grid_size = 3
         # G = nx.Graph()
         # for i in range(grid_size):
         #     for j in range(grid_size):
         #         G.add_node((i,j))
-        G = nx.grid_2d_graph(grid_size, grid_size, periodic =False)
+        G = nx.grid_2d_graph(GRID_SIZE, GRID_SIZE, periodic =False)
         nx.set_edge_attributes(G, NON_SNAKE_WEIGHTS, "weight" )
         return G
 
@@ -338,6 +338,21 @@ class PathSolver():
         self.vars = self.create_vars()
         self.get_qubo()
         self.run_dwave()
+        self.get_shortest_path_graph()
+
+    def get_shortest_path_graph(self):
+        graph = nx.grid_2d_graph(GRID_SIZE, GRID_SIZE, periodic =False)
+        for edge in graph.edges():
+            try:
+                if self.sampleset.first.sample[f'{edge}']:
+                    print(f'{edge} MADE IT')
+                #nx.set_edge_attributes(graph, f'{edge}', 
+                
+                #print(f"we made it: {edge}")
+            except KeyError:
+                print(edge)
+                #print(f'No Key: {edge}')
+                
 
     def run_dwave(self):
         #sampler = DWaveSampler().sample_qubo(self.qubo)
@@ -345,11 +360,11 @@ class PathSolver():
 
  #       Dwavesolver = EmbeddingComposite(DWaveSampler())
 #        sampleset = Dwavesolver.sample_qubo(self.qubo, num_reads=1000)
-        sampleset = ExactSolver().sample_qubo(self.qubo)
-        print(f'SAMPLE: {sampleset.first}')
-        for k,v in sampleset.first.sample.items():
+        self.sampleset = ExactSolver().sample_qubo(self.qubo)
+        #print(f'SAMPLE: {self.sampleset.first}')
+        for k,v in self.sampleset.first.sample.items():
             print(f'Key: {k}\t\t\t\t Val: {v}')
-
+        
   #      Q.update(coupler_strengths)
         # Sample once on a D-Wave system and print the returned sample
         #response = DWaveSampler().sample_qubo(Q, num_reads=1)
