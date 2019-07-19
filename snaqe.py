@@ -321,6 +321,7 @@ class PathSolver():
         self.graph = graph.copy()
         self.vars = self.create_vars()
         self.one_body_terms()
+        self.two_body_terms()
 
     
     def create_vars(self):
@@ -330,34 +331,68 @@ class PathSolver():
         #print(vars)
         return vars
 
+    def two_body_terms(self):
+        #twobody head terms
+        H=0
+        H1=0
+        lambda_ = 2
+        for head_edge_1 in self.head_edges:
+            for head_edge_2 in self.head_edges:
+                if head_edge_1 == head_edge_2:
+                    H1 += lambda_*self.vars[head_edge_1]*self.vars[head_edge_2]
+                else:
+                    H1 += 0.5*lambda_*self.vars[head_edge_1]*self.vars[head_edge_2]
+
+        #apple twobody terms
+        H2=0
+        gamma = 2
+        for apple_edge_1 in self.apple_edges:
+            for apple_edge_2 in self.apple_edges:
+                if apple_edge_1 == apple_edge_2:
+                    H2 +=gamma*self.vars[apple_edge_1]*self.vars[apple_edge_2]
+                else:
+                    H2 += 0.5*gamma*self.vars[apple_edge_1]*self.vars[apple_edge_2]
+        print(H1+H2)
+
+    
     def one_body_terms(self):
         #Distance traversted term
         H = 0
         H1 = 0
         for edge in self.graph.edges.data():
-            print(f'blah: {edge}')
             dict_key = self.get_valid_key((edge[0],edge[1]))
             #print(edge[2]["weight"])
             H1 += edge[2]["weight"]*self.vars[dict_key]
-        print(H1)
 
         #Links around the head term
         H2=0
         lambda_=2
-
+        self.head_edges = []
         for edge in self.graph.edges(self.head):
-            print(f'edge: {edge}')
-            H2 -= 2*lambda_*self.vars[self.get_valid_key(edge)]
-        print(H2)
+            head_edge = self.get_valid_key(edge)
+            H2 -= 2*lambda_*self.vars[head_edge]
+            self.head_edges.append(head_edge)
 
         #Links around the apple term
         H3=0
         gamma=2
-        print(f'apple: {self.apple}')
+        self.apple_edges=[]
         for edge in self.graph.edges(self.apple):
-            print(f'edge: {edge}')
-            H3 -= 2*gamma*self.vars[self.get_valid_key(edge)]
-        print(H3)
+            apple_edge = self.get_valid_key(edge)
+            H3 -= 2*gamma*self.vars[apple_edge]
+            self.apple_edges.append(apple_edge)
+
+        #Links from 3body bulk term
+        H4=0
+        chi=2
+        for edge in self.graph.edges():
+            if edge in self.head_edges or edge in self.apple_edges:
+                pass
+            H4 -= 2*chi*self.vars[self.get_valid_key(edge)]
+
+        H= H1 + H2 + H3 + H4
+        print(H)
+        return H 
 
         
         
