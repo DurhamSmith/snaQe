@@ -565,9 +565,9 @@ class PathSolver():
 
 def main():
     global width, rows, s, snack, sampleset
-    width = 500
-    rows = 10
-    #win = pygame.display.set_mode((width, width))
+    width =  100
+    rows = 3
+    win = pygame.display.set_mode((width, width))
     s = snake((0,255,0), (1,1)) #snake starts at rtupple
     #snack = cube(randomSnack(rows, s), color=(255,0,0))
     snack = cube(randomSnack(3, s), color=(255,0,0))
@@ -583,13 +583,24 @@ def main():
     H.add_edge((10,10),(11,10))
     H.add_edge((11,10),(11,11))
     print(f'HYPERS \t LAMBDA: {LAMBDA}\t CHI: {CHI}\t MU: {MU}\t GAMMA: {GAMMA}')
-    ps=PathSolver(s.snake_to_graph(), s, (2, 2))
+    ps=PathSolver(s.snake_to_graph(), s, snack.pos)
+    redrawWindow(win)
 
-#    s.graph_to_moves(H)
+    pygame.time.delay(100)
 
-
-    # clock = pygame.time.Clock()
-
+    clock = pygame.time.Clock()
+    for move in ps.moves:
+        pygame.time.delay(100)
+        print(move)
+        s.dirnx=move[0]
+        s.dirny=move[1]
+        s.move()
+        redrawWindow(win)
+        
+        
+    
+    
+    
     # while flag:
     #     pygame.time.delay(50)
     #     clock.tick(10)
