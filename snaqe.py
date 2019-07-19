@@ -373,6 +373,7 @@ class PathSolver():
     
     def two_body_terms(self):
         #twobody head terms
+        #Checked @ 10:04
         H=0
         H1=0
         for head_edge_1 in self.head_edges:
@@ -383,6 +384,7 @@ class PathSolver():
                     H1 += LAMBDA*self.vars[head_edge_1]*self.vars[head_edge_2]
 
         #apple twobody terms
+        # Checked @ 10:06
         H2=0
         for apple_edge_1 in self.apple_edges:
             for apple_edge_2 in self.apple_edges:
@@ -391,21 +393,29 @@ class PathSolver():
                 else:
                     H2 += GAMMA*self.vars[apple_edge_1]*self.vars[apple_edge_2]
 
-        #make sure graph is corrected
+
+        #make sure graph is connected
         H3=0
         for edge in self.graph.edges():
-            for nodal_edge in self.graph.edges(self.get_valid_key(edge)[0]):
-                if self.get_valid_key(edge)[0] == self.get_valid_key(nodal_edge)[0]:
+            e=self.get_valid_key(edge)
+            for nodal_edge in self.graph.edges(e[0]):
+                n = self.get_valid_key(nodal_edge)
+                if  e == n:
                     pass
                 else:
-                    H3 -= MU*self.vars[self.get_valid_key(nodal_edge)]*self.vars[self.get_valid_key(edge)]
-            for nodal_edge in self.graph.edges(self.get_valid_key(edge)[1]):
-                if self.get_valid_key(edge)[1] == self.get_valid_key(nodal_edge)[1]:
+                    #print(f'EDGE: {e} OTHER EDGE: {n} FORMULA: {-1*MU*self.vars[n]*self.vars[e]}')
+                    H3 -= MU*self.vars[n]*self.vars[e]
+            for nodal_edge in self.graph.edges(e[1]):
+                n = self.get_valid_key(nodal_edge)
+                if e == n:
                     pass
                 else:
-                    H3 -= MU*self.vars[self.get_valid_key(nodal_edge)]*self.vars[self.get_valid_key(edge)]
+                    #print(f'EDGE: {e} OTHER EDGE: {n} FORMULA: {-1*MU*self.vars[n]*self.vars[e]}')
+                    H3 -= MU*self.vars[n]*self.vars[e]
+
 
         #manby body terms
+        #Checked at 10:37
         H4=0
         for edge_1 in self.graph.edges():
             e1 = self.get_valid_key(edge_1)
@@ -414,13 +424,13 @@ class PathSolver():
             else:
                 for edge_2 in self.graph.edges():
                     e2 = self.get_valid_key(edge_2)
-                    if e2 in self.apple_edges or e2 in self.head_edges:
-                        pass
-                    elif e1==e2:
-                        H4 += -2*CHI*self.vars[e1]*self.vars[e2]
-                    else:
-                        H4 += -2*CHI*self.vars[e1]*self.vars[e2]
 
+                    if e2 in self.apple_edges or e2 in self.head_edges or e2 in self.head_neck_edge:
+                        pass
+                    else:
+                        #print(f'edge1: {e1} edge2 {e2} forumla {-2*CHI*self.vars[e1]*self.vars[e2]}')
+                        H4 += -2*CHI*self.vars[e1]*self.vars[e2]
+        #print(H4)
         H = H1+H2+H3+H4
         return H
 
@@ -499,7 +509,7 @@ class PathSolver():
             e = self.get_valid_key(edge)
             if e not in self.head_edges and edge not in self.apple_edges and not e==head_neck_edge:
                 H4 += 4*CHI*self.vars[self.get_valid_key(edge)]
-        print(H4)
+
         H= H1 + H2 + H3 + H4
 
         return H
