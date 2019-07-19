@@ -352,9 +352,56 @@ class PathSolver():
                     H2 +=gamma*self.vars[apple_edge_1]*self.vars[apple_edge_2]
                 else:
                     H2 += 0.5*gamma*self.vars[apple_edge_1]*self.vars[apple_edge_2]
-        print(H1+H2)
 
-    
+        #make sure graph is corrected
+        H3=0
+        mu= 2
+        for edge in self.graph.edges():
+            for nodal_edge in self.graph.edges(self.get_valid_key(edge)[0]):
+                if self.get_valid_key(edge)[0] == self.get_valid_key(nodal_edge)[0]:
+                    pass
+                else:
+                    H3 -= mu*self.vars[self.get_valid_key(nodal_edge)]*self.vars[self.get_valid_key(edge)]
+            for nodal_edge in self.graph.edges(self.get_valid_key(edge)[1]):
+                if self.get_valid_key(edge)[1] == self.get_valid_key(nodal_edge)[1]:
+                    pass
+                else:
+                    H3 -= mu*self.vars[self.get_valid_key(nodal_edge)]*self.vars[self.get_valid_key(edge)]
+
+        #manby body terms
+        H4=0
+        chi = 2
+        for edge_1 in self.graph.edges():
+            e1 = self.get_valid_key(edge_1)
+            if e1 in self.apple_edges or e1 in self.head_edges:
+                pass
+            else:
+                for edge_2 in self.graph.edges():
+                    e2 = self.get_valid_key(edge_2)
+                    if e2 in self.apple_edges or e2 in self.head_edges:
+                        pass
+                    elif e1==e2:
+                        H4 += -2*chi*self.vars[e1]*self.vars[e2]
+                    else:
+                        H4 += -1*chi*self.vars[e1]*self.vars[e2]
+
+        H = H1+H2+H3+H4
+        return H
+                
+
+            
+
+    def get_node(self, tup): 
+        if tup[0][0] == tup[1][0]:
+            return tup[0][0]
+        if tup[0][0] == tup[1][1]:
+            return tup[0][0]
+        if tup[0][1] == tup[1][0]:
+            return tup[0][1]
+        if tup[0][1] == tup[1][1]:
+            return tup[0][1]
+
+        
     def one_body_terms(self):
         #Distance traversted term
         H = 0
@@ -391,7 +438,7 @@ class PathSolver():
             H4 -= 2*chi*self.vars[self.get_valid_key(edge)]
 
         H= H1 + H2 + H3 + H4
-        print(H)
+
         return H 
 
         
