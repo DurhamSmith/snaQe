@@ -16,7 +16,9 @@ import pickle
 import json
 from dimod.serialization.json import DimodEncoder, DimodDecoder
 
-CHI = 0.01
+NON_SNAKE_WEIGHTS=1
+SNAKE_WEIGHTS=10
+CHI = 5
 LAMBDA = 1
 MU = 1
 GAMMA = 1
@@ -120,7 +122,7 @@ class snake(object):
         #     for j in range(grid_size):
         #         G.add_node((i,j))
         G = nx.grid_2d_graph(grid_size, grid_size, periodic =False)
-        nx.set_edge_attributes(G, 2, "weight" )
+        nx.set_edge_attributes(G, NON_SNAKE_WEIGHTS, "weight" )
         return G
 
     def snake_to_graph(self):
@@ -129,7 +131,7 @@ class snake(object):
         for cube in self.body:
             print(f'snake body cube: {cube.pos}')
             if prev_cube_pos:
-                G.add_edge(cube.pos, prev_cube_pos, weight=5)
+                G.add_edge(cube.pos, prev_cube_pos, weight=SNAKE_WEIGHTS)
             prev_cube_pos = cube.pos
         #nx.bipartite_layout(G,G.nodes())
         #nx.draw(G)
@@ -344,7 +346,9 @@ class PathSolver():
  #       Dwavesolver = EmbeddingComposite(DWaveSampler())
 #        sampleset = Dwavesolver.sample_qubo(self.qubo, num_reads=1000)
         sampleset = ExactSolver().sample_qubo(self.qubo)
-        #print(f'SAMPLE: {sampleset.first}')
+        print(f'SAMPLE: {sampleset.first}')
+        for k,v in sampleset.first.sample.items():
+            print(f'Key: {k}\t\t\t\t Val: {v}')
 
   #      Q.update(coupler_strengths)
         # Sample once on a D-Wave system and print the returned sample
@@ -435,23 +439,25 @@ class PathSolver():
         return H
 
     def get_justin_trubo(self):
+        #Checked @ 10:46
         H=0
         for edge_1 in self.graph.edges():
             e1 = self.get_valid_key(edge_1)
-            if e1 in self.apple_edges or e1 in self.head_edges:
+            if e1 in self.apple_edges or e1 in self.head_edges or e1 == self.head_neck_edge:
                 pass
             else:
                 for edge_2 in self.graph.edges():
                     e2 = self.get_valid_key(edge_2)
-                    if e2 in self.apple_edges or e2 in self.head_edges:
+                    if e2 in self.apple_edges or e2 in self.head_edges or e2 == self.head_neck_edge:
                         pass
                     else:
                         for edge_3 in self.graph.edges():
                             e3 = self.get_valid_key(edge_3)
-                            if e3 in self.apple_edges or e3 in self.head_edges:
+                            if e3 in self.apple_edges or e3 in self.head_edges or e3 == self.head_neck_edge:
                                 pass
                             else:
-                                H += -2*CHI*self.vars[e1]*self.vars[e2]*self.vars[e3]
+                                #print(f'Edge1: {e1}\tEdge2: {e2}\tEdge3: {e3}\tFormula: {CHI*self.vars[e1]*self.vars[e2]*self.vars[e3]}')
+                                H += CHI*self.vars[e1]*self.vars[e2]*self.vars[e3]
         #print(H)
         return H
 
