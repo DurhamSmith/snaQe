@@ -1,6 +1,6 @@
 #Snake Tutorial Python
 import dwave
-from pyqubo import Binary
+from pyqubo import Binary, solve_qubo
 from dwave.system import DWaveSampler, EmbeddingComposite
 from dimod import ExactSolver
 from pyqubo import Binary
@@ -16,7 +16,6 @@ import pickle
 import json
 from dimod.serialization.json import DimodEncoder, DimodDecoder
 
-SIGMA= 1
 CHI = 0.01
 LAMBDA = 1
 MU = 1
@@ -334,7 +333,7 @@ class PathSolver():
         self.apple = apple_pos
         self.graph = graph.copy()
         self.vars = self.create_vars()
-        self.qubo = self.get_qubo()
+        self.get_qubo()
         self.run_dwave()
 
     def run_dwave(self):
@@ -344,9 +343,7 @@ class PathSolver():
  #       Dwavesolver = EmbeddingComposite(DWaveSampler())
 #        sampleset = Dwavesolver.sample_qubo(self.qubo, num_reads=1000)
         sampleset = ExactSolver().sample_qubo(self.qubo)
-        #print(sampleset)
-        print("type")
-        print(f'SAMPLE: {sampleset.first}')
+        #print(f'SAMPLE: {sampleset.first}')
 
   #      Q.update(coupler_strengths)
         # Sample once on a D-Wave system and print the returned sample
@@ -359,18 +356,18 @@ class PathSolver():
         H= self.one_body_terms() + self.two_body_terms() + self.get_justin_trubo()
         model = H.compile()
         #print(model)
-        qubo, offset = model.to_qubo()
-        print(f'QUBO:\n {qubo}')
-        return qubo
+        self.qubo, self.offset = model.to_qubo()
+        #print(f'QUBO:\n {self.qubo}')
+        
 
     def create_vars(self):
        vars ={}
        print('===========MAPPINGS==============')
        for i, edge in enumerate(self.graph.edges.data()):
            e=(edge[0],edge[1])
-           print(f'edge: {e} \t data: {edge[2]}\t mapping x{i}')
-           vars[e] = Binary(f'x{i}')
-       #print(vars)
+           #print(f'edge: {e} \t data: {edge[2]}}')
+           label = f'({edge[0]}, {edge[1]})'
+           vars[e] = Binary(label)
        return vars
     
     def two_body_terms(self):
@@ -464,11 +461,12 @@ class PathSolver():
         #Distance traversted term
         H = 0
         H1 = 0
+        #checked H1 @ 09:12
         for edge in self.graph.edges.data():
             dict_key = self.get_valid_key((edge[0],edge[1]))
             #print(edge[2]["weight"])
             H1 += edge[2]["weight"]*self.vars[dict_key]
-
+        
         #Links around the head term
         H2=0
         self.head_edges = []
@@ -476,7 +474,8 @@ class PathSolver():
             head_edge = self.get_valid_key(edge)
             H2 -= 2*LAMBDA*self.vars[head_edge]
             self.head_edges.append(head_edge)
-
+        print(H2)
+            
         #Links around the apple term
         H3=0
         self.apple_edges=[]
@@ -515,7 +514,7 @@ def main():
     width = 500
     rows = 10
     #win = pygame.display.set_mode((width, width))
-    s = snake((0,255,0), (1,1))
+    s = snake((0,255,0), (1,1)) #snake starts at rtupple
     #snack = cube(randomSnack(rows, s), color=(255,0,0))
     snack = cube(randomSnack(3, s), color=(255,0,0))
     flag = True
@@ -529,7 +528,7 @@ def main():
     H.add_node((11,11))
     H.add_edge((10,10),(11,10))
     H.add_edge((11,10),(11,11))
-
+    print(f'HYPERS \t LAMBDA: {LAMBDA}\t CHI: {CHI}\t MU: {MU}\t GAMMA: {GAMMA}')
     ps=PathSolver(s.snake_to_graph(), s.body[0].pos, (2, 2))
 
 #    s.graph_to_moves(H)
