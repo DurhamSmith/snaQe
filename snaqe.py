@@ -66,33 +66,33 @@ class snake(object):
         self.dirny = 1
 
     def move(self):
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
+        # for event in pygame.event.get():
+        #     if event.type == pygame.QUIT:
+        #         pygame.quit()
 
-            keys = pygame.key.get_pressed()
+        #     keys = pygame.key.get_pressed()
 
-            for key in keys:
-                if keys[pygame.K_LEFT]:
-                    self.dirnx = -1
-                    self.dirny = 0
-                    self.turns[self.head.pos[:]] = [self.dirnx, self.dirny]
+            # for key in keys:
+            #     if keys[pygame.K_LEFT]:
+            #         self.dirnx = -1
+            #         self.dirny = 0
+            #         self.turns[self.head.pos[:]] = [self.dirnx, self.dirny]
 
-                elif keys[pygame.K_RIGHT]:
-                    self.dirnx = 1
-                    self.dirny = 0
-                    self.turns[self.head.pos[:]] = [self.dirnx, self.dirny]
+            #     elif keys[pygame.K_RIGHT]:
+            #         self.dirnx = 1
+            #         self.dirny = 0
+            #         self.turns[self.head.pos[:]] = [self.dirnx, self.dirny]
 
-                elif keys[pygame.K_UP]:
-                    self.dirnx = 0
-                    self.dirny = -1
-                    self.turns[self.head.pos[:]] = [self.dirnx, self.dirny]
+            #     elif keys[pygame.K_UP]:
+            #         self.dirnx = 0
+            #         self.dirny = -1
+            #         self.turns[self.head.pos[:]] = [self.dirnx, self.dirny]
 
-                elif keys[pygame.K_DOWN]:
-                    self.dirnx = 0
-                    self.dirny = 1
-                    self.turns[self.head.pos[:]] = [self.dirnx, self.dirny]
+            #     elif keys[pygame.K_DOWN]:
+            #         self.dirnx = 0
+            #         self.dirny = 1
 
+        self.turns[self.head.pos[:]] = [self.dirnx, self.dirny]
         for i, c in enumerate(self.body):
             p = c.pos[:]
             if p in self.turns:
@@ -586,11 +586,11 @@ def main():
     ps=PathSolver(s.snake_to_graph(), s, snack.pos)
     redrawWindow(win)
 
-    pygame.time.delay(100)
+    pygame.time.delay(10)
 
     clock = pygame.time.Clock()
     for move in ps.moves:
-        pygame.time.delay(100)
+        pygame.time.delay(10)
         print(move)
         s.dirnx=move[0]
         s.dirny=move[1]
